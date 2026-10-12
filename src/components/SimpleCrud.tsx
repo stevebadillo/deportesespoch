@@ -79,6 +79,13 @@ export function SimpleCrud({
     if (!edit) return;
     try {
       const datos = limpiar(edit);
+      if (tabla === "periodos" && datos.activo) {
+        // Garantizar que solo un período permanezca activo
+        await supabase
+          .from("periodos")
+          .update({ activo: false } as never)
+          .neq("id", (edit.id as string) ?? "00000000-0000-0000-0000-000000000000");
+      }
       const { error } = edit.id
         ? await supabase.from(tabla).update(datos as never).eq("id", edit.id as string)
         : await supabase.from(tabla).insert(datos as never);

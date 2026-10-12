@@ -112,7 +112,7 @@ export function GrupoModule({ tipo, data }: { tipo: Tipo; data: DatosCompletos }
           }
         />
         <Button onClick={() => setEdit({ periodo_id: activo || null, ids: new Set() })}>
-          <Plus className="mr-2 h-4 w-4" /> Nueva {esSel ? "selección" : "club"}
+          <Plus className="mr-2 h-4 w-4" /> {esSel ? "Nueva selección" : "Nuevo club"}
         </Button>
       </PageHeader>
 

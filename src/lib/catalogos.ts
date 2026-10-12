@@ -6,7 +6,8 @@ export const FACULTADES_Y_CARRERAS: Record<string, string[]> = {
     "Mercadotecnia",
     "Gestión del Transporte",
     "Gestión de Inteligencia de Negocios",
-    "Economía y Comercio",
+    "Comercio Exterior",
+    "Economía",
   ],
   "FACULTAD DE CIENCIAS": [
     "Física",
@@ -55,6 +56,34 @@ export const FACULTADES_Y_CARRERAS: Record<string, string[]> = {
 };
 
 export const LISTA_FACULTADES = Object.keys(FACULTADES_Y_CARRERAS);
+
+export interface CatalogoPeriodo {
+  nombre: string;
+  fecha_inicio: string;
+  fecha_fin: string;
+  activo: boolean;
+}
+
+export const CATALOGO_PERIODOS: CatalogoPeriodo[] = [
+  {
+    nombre: "PAO 2025-2 (Octubre 2025 - Febrero 2026)",
+    fecha_inicio: "2025-10-01",
+    fecha_fin: "2026-02-28",
+    activo: false,
+  },
+  {
+    nombre: "PAO 2026-1 (Marzo 2026 - Agosto 2026)",
+    fecha_inicio: "2026-03-01",
+    fecha_fin: "2026-08-31",
+    activo: false,
+  },
+  {
+    nombre: "PAO 2026-2 (Septiembre 2026 - Febrero 2027)",
+    fecha_inicio: "2026-09-01",
+    fecha_fin: "2027-02-28",
+    activo: true,
+  },
+];
 
 export function getCarrerasPorFacultad(facultad: string | null | undefined): string[] {
   if (!facultad) return [];
