@@ -35,15 +35,10 @@ foreach t in array array['periodos','deportes','deportistas','deportista_deporte
   execute format('create policy "coordinador" on public.%I for all to authenticated using (public.has_role(auth.uid(),''admin'')) with check (public.has_role(auth.uid(),''admin''))', t);
 end loop; end $$;
 
--- datos de ejemplo (oficiales ESPOCH)
+-- datos de ejemplo
 insert into public.periodos(nombre, fecha_inicio, fecha_fin, activo, es_ejemplo) values
-('PAO 2025-2 (Octubre 2025 - Febrero 2026)', '2025-10-01','2026-02-28', false, true),
-('PAO 2026-1 (Marzo 2026 - Agosto 2026)', '2026-03-01','2026-08-31', false, true),
-('PAO 2026-2 (Septiembre 2026 - Febrero 2027)', '2026-09-01','2027-02-28', true, true);
-
-insert into public.deportes(nombre, es_ejemplo) values
-('Fútbol',true),('Baloncesto',true),('Vóley',true),('Atletismo',true),('Natación',true),('Ajedrez',true),('Taekwondo',true),('Tenis de Mesa',true);
-
+('2025-2', '2025-09-01','2026-02-28', false, true), ('2026-1','2026-03-01','2026-08-31', true, true);
+insert into public.deportes(nombre, es_ejemplo) values ('Fútbol',true),('Baloncesto',true),('Vóley',true),('Atletismo',true),('Natación',true),('Ajedrez',true);
 insert into public.deportistas(cedula,nombres,apellidos,fecha_nacimiento,carrera,facultad,es_ejemplo) values
 ('0600000001','Ana','Guamán','2003-04-12','Software','FACULTAD DE INFORMÁTICA Y ELECTRÓNICA',true),
 ('0600000002','Luis','Paredes','2002-11-03','Medicina','FACULTAD DE SALUD PÚBLICA',true),
@@ -52,30 +47,21 @@ insert into public.deportistas(cedula,nombres,apellidos,fecha_nacimiento,carrera
 ('0600000005','Sofía','Cando','2003-09-15','Nutrición y Dietética','FACULTAD DE SALUD PÚBLICA',true),
 ('0600000006','Diego','Lema','2002-05-08','Tecnologías de la Información','FACULTAD DE INFORMÁTICA Y ELECTRÓNICA',true),
 ('0600000007','Valeria','Ortiz','2004-03-19','Administración de Empresas','FACULTAD DE ADMINISTRACIÓN DE EMPRESAS',true),
-('0600000008','Jorge','Cáceres','2000-12-01','Bioquímica y Farmacia','FACULTAD DE CIENCIAS',true),
+('0600000008','Jorge','Cáceres','2000-12-01','Mecánica','FACULTAD DE MECÁNICA',true),
 ('0600000009','Camila','Silva','2003-06-25','Contabilidad y Auditoría','FACULTAD DE ADMINISTRACIÓN DE EMPRESAS',true),
-('0600000010','Andrés','Pilco','2002-02-14','Zootecnia','FACULTAD DE CIENCIAS PECUARIAS',true),
-('0600000011','Mateo','Morales','2001-10-10','Mecánica','FACULTAD DE MECÁNICA',true);
-
+('0600000010','Andrés','Pilco','2002-02-14','Zootecnia','FACULTAD DE CIENCIAS PECUARIAS',true);
 insert into public.deportista_deportes select d.id, p.id from public.deportistas d, public.deportes p where
- (d.cedula in ('0600000001','0600000002','0600000006','0600000008','0600000010','0600000011') and p.nombre='Fútbol') or
+ (d.cedula in ('0600000001','0600000002','0600000006','0600000008','0600000010') and p.nombre='Fútbol') or
  (d.cedula in ('0600000003','0600000005','0600000007') and p.nombre='Vóley') or
  (d.cedula in ('0600000002','0600000004','0600000009') and p.nombre='Baloncesto') or
- (d.cedula in ('0600000001','0600000005','0600000008') and p.nombre='Atletismo') or
+ (d.cedula in ('0600000001','0600000005') and p.nombre='Atletismo') or
  (d.cedula in ('0600000007') and p.nombre='Ajedrez');
-
-insert into public.selecciones(nombre,deporte_id,periodo_id,es_ejemplo) select 'Selección de Fútbol Masculino', (select id from deportes where nombre='Fútbol'), (select id from periodos where nombre like 'PAO 2026-2%'), true;
-insert into public.selecciones(nombre,deporte_id,periodo_id,es_ejemplo) select 'Selección de Vóley Femenino', (select id from deportes where nombre='Vóley'), (select id from periodos where nombre like 'PAO 2026-2%'), true;
-insert into public.clubes(nombre,deporte_id,periodo_id,es_ejemplo) select 'Club de Baloncesto', (select id from deportes where nombre='Baloncesto'), (select id from periodos where nombre like 'PAO 2026-2%'), true;
-insert into public.clubes(nombre,deporte_id,periodo_id,es_ejemplo) select 'Club de Atletismo', (select id from deportes where nombre='Atletismo'), (select id from periodos where nombre like 'PAO 2026-1%'), true;
-
-insert into public.seleccion_miembros select s.id, d.id from selecciones s, deportistas d where s.nombre like '%Fútbol%' and d.cedula in ('0600000002','0600000006','0600000008','0600000010','0600000011');
+insert into public.selecciones(nombre,deporte_id,periodo_id,es_ejemplo) select 'Selección de Fútbol Masculino', (select id from deportes where nombre='Fútbol'), (select id from periodos where nombre='2026-1'), true;
+insert into public.selecciones(nombre,deporte_id,periodo_id,es_ejemplo) select 'Selección de Vóley Femenino', (select id from deportes where nombre='Vóley'), (select id from periodos where nombre='2026-1'), true;
+insert into public.clubes(nombre,deporte_id,periodo_id,es_ejemplo) select 'Club de Baloncesto', (select id from deportes where nombre='Baloncesto'), (select id from periodos where nombre='2026-1'), true;
+insert into public.clubes(nombre,deporte_id,periodo_id,es_ejemplo) select 'Club de Atletismo', (select id from deportes where nombre='Atletismo'), (select id from periodos where nombre='2025-2'), true;
+insert into public.seleccion_miembros select s.id, d.id from selecciones s, deportistas d where s.nombre like '%Fútbol%' and d.cedula in ('0600000002','0600000006','0600000008','0600000010');
 insert into public.seleccion_miembros select s.id, d.id from selecciones s, deportistas d where s.nombre like '%Vóley%' and d.cedula in ('0600000003','0600000005','0600000007');
 insert into public.club_miembros select c.id, d.id from clubes c, deportistas d where c.nombre like '%Baloncesto%' and d.cedula in ('0600000002','0600000004','0600000009');
-insert into public.club_miembros select c.id, d.id from clubes c, deportistas d where c.nombre like '%Atletismo%' and d.cedula in ('0600000001','0600000005','0600000008');
-
-insert into public.escenarios(nombre,capacidad,tipo,ubicacion,es_ejemplo) values
-('Estadio Politécnico',3000,'Estadio','Campus Central - Panamericana Sur km 1 1/2',true),
-('Coliseo Politécnico',1500,'Coliseo','Campus Central - Sector Deportivo',true),
-('Piscina Semiolímpica Politécnica',250,'Piscina','Campus Central - Complejo Acuático',true),
-('Cancha Sintética de Fútbol',120,'Cancha','Campus Central - Junto al Coliseo',true);
+insert into public.club_miembros select c.id, d.id from clubes c, deportistas d where c.nombre like '%Atletismo%' and d.cedula in ('0600000001','0600000005');
+insert into public.escenarios(nombre,capacidad,tipo,ubicacion,es_ejemplo) values ('Estadio Politécnico',3000,'Estadio','Campus central',true),('Coliseo ESPOCH',1500,'Coliseo','Campus central',true),('Piscina Semiolímpica',200,'Piscina','Junto al coliseo',true),('Cancha sintética 1',100,'Cancha','Zona deportiva',true);
