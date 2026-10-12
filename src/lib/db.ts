@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { CATALOGO_CLUBES, CATALOGO_DEPORTES, CATALOGO_ESCENARIOS, CATALOGO_PERIODOS, CATALOGO_SELECCIONES, normalizarCarrera, normalizarFacultad } from "./catalogos";
+import { CATALOGO_CLUBES, CATALOGO_DEPORTES, CATALOGO_ESCENARIOS, CATALOGO_SELECCIONES, normalizarCarrera, normalizarFacultad } from "./catalogos";
 
 export type Deportista = Tables<"deportistas">;
 export type Deporte = Tables<"deportes">;
@@ -15,59 +15,23 @@ async function all<T>(q: PromiseLike<{ data: T[] | null; error: unknown }>) {
   return data ?? [];
 }
 
-async function asegurarPeriodos(existentes: Tables<"periodos">[]) {
-  // 1. Migrar períodos de ejemplo desactualizados al formato oficial PAO de la ESPOCH
-  const renombrar: Record<string, string> = {
-    "2025-2": "PAO 2025-2 (Octubre 2025 - Febrero 2026)",
-    "2026-1": "PAO 2026-1 (Marzo 2026 - Agosto 2026)",
-    "Septiembre 2026 - Febrero 2027": "PAO 2026-2 (Septiembre 2026 - Febrero 2027)",
-  };
-
-  const actualizados = [...existentes];
-  for (let i = 0; i < actualizados.length; i++) {
-    const p = actualizados[i];
-    const nuevoNombre = renombrar[p.nombre];
-    if (nuevoNombre) {
-      await supabase.from("periodos").update({ nombre: nuevoNombre }).eq("id", p.id);
-      actualizados[i] = { ...p, nombre: nuevoNombre };
+async function asegurarPeriodoActual(existentes: Tables<"periodos">[]) {
+  // Limpiar cualquier período con formato "PAO ..." generado automáticamente por error
+  const creadosPorError = existentes.filter(
+    (p) =>
+      p.nombre.startsWith("PAO 2025-2") ||
+      p.nombre.startsWith("PAO 2026-1") ||
+      p.nombre.startsWith("PAO 2026-2")
+  );
+  if (creadosPorError.length > 0) {
+    for (const err of creadosPorError) {
+      supabase.from("periodos").delete().eq("id", err.id).then(() => {});
     }
+    return existentes.filter((p) => !creadosPorError.some((c) => c.id === p.id));
   }
-
-  // 2. Insertar períodos faltantes del catálogo oficial
-  const nombresExistentes = new Set(actualizados.map((p) => p.nombre.trim().toLowerCase()));
-  const faltantes = CATALOGO_PERIODOS.filter((p) => !nombresExistentes.has(p.nombre.trim().toLowerCase()));
-  if (faltantes.length) {
-    const aInsertar = faltantes.map((p) => ({
-      nombre: p.nombre,
-      fecha_inicio: p.fecha_inicio,
-      fecha_fin: p.fecha_fin,
-      activo: p.activo,
-      es_ejemplo: false,
-    }));
-    const { data: nuevos } = await supabase.from("periodos").insert(aInsertar).select("*");
-    if (nuevos?.length) {
-      actualizados.push(...nuevos);
-    }
-  }
-
-  // 3. Garantizar que exista exactamente un período activo (preferencia al período actual oficial)
-  const actualOficial =
-    actualizados.find((p) => p.nombre.includes("PAO 2026-2")) ??
-    actualizados.find((p) => p.activo) ??
-    actualizados[0];
-
-  if (actualOficial) {
-    for (let i = 0; i < actualizados.length; i++) {
-      const debeSerActivo = actualizados[i].id === actualOficial.id;
-      if (actualizados[i].activo !== debeSerActivo) {
-        await supabase.from("periodos").update({ activo: debeSerActivo }).eq("id", actualizados[i].id);
-        actualizados[i] = { ...actualizados[i], activo: debeSerActivo };
-      }
-    }
-  }
-
-  return actualizados.sort((a, b) => (b.fecha_inicio ?? "").localeCompare(a.fecha_inicio ?? ""));
+  return existentes;
 }
+
 
 async function asegurarDeportes(existentes: Tables<"deportes">[]) {
   const nombresExistentes = new Set(existentes.map((d) => d.nombre.trim().toLowerCase()));
@@ -216,7 +180,7 @@ async function cargarTodo() {
       all(supabase.from("club_miembros").select("*")),
     ]);
 
-  const periodos = await asegurarPeriodos(periodosRaw);
+  const periodos = await asegurarPeriodoActual(periodosRaw);
   const periodoActualId = periodos.find((p) => p.activo)?.id ?? null;
   const deportes = await asegurarDeportes(deportesRaw);
   const selecciones = await asegurarSelecciones(seleccionesRaw, deportes, periodoActualId);
